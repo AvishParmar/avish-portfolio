@@ -49,29 +49,41 @@ export default function NetworkBackground({ isDark }) {
     const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     if (reduceMotion) return;
 
+    // Detect touch device (mobile/tablet)
+    const isTouchDevice =
+      "ontouchstart" in window || (navigator?.maxTouchPoints ?? 0) > 0;
+
     let w = 0, h = 0, dpr = 1;
-    const mouse = { x: 0.5, y: 0.35 };   // normalized
-    const smooth = { x: 0.5, y: 0.35 };  // smoothed normalized
+
+    // Mouse normalized (desktop only)
+    const mouse = { x: 0.5, y: 0.35 };
+    const smooth = { x: 0.5, y: 0.35 };
+
+    // Rotation state
+    let yaw = 0;
+    let pitch = 0;
+    const target = { yaw: 0, pitch: 0 };
 
     const N = 60;
-    const nodes = []; // {x,y,z}
-    let edges = [];   // [i,j,baseAlpha]
+    const nodes = [];
+    let edges = [];
 
     const palette = isDark
-    ? {
-        bg: "#0B1220",
-        node: "rgba(226,232,240,0.32)",
-        edge: "rgba(255,255,255,0.22)",     // ← whiter
-        edgeNear: "rgba(255,255,255,0.45)", // ← brighter on hover
-      }
-    : {
-        bg: "#FFFFFF",
-        node: "rgba(15,23,42,0.18)",
-        edge: "rgba(15,23,42,0.12)",
-        edgeNear: "rgba(37,99,235,0.18)",
-      };
+      ? {
+          bg: "#0B1220",
+          node: "rgba(226,232,240,0.32)",
+          edge: "rgba(255,255,255,0.22)",
+          edgeNear: "rgba(255,255,255,0.45)",
+        }
+      : {
+          bg: "#FFFFFF",
+          node: "rgba(15,23,42,0.18)",
+          edge: "rgba(15,23,42,0.12)",
+          edgeNear: "rgba(37,99,235,0.18)",
+        };
 
     const rand = (a, b) => a + Math.random() * (b - a);
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
     const resize = () => {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -89,14 +101,12 @@ export default function NetworkBackground({ isDark }) {
       nodes.length = 0;
       edges = [];
 
-      const r = Math.min(w, h) * 0.42; // cluster radius
-      // Create a 3D-ish blob: dense center, some outliers
+      const r = Math.min(w, h) * 0.42;
       for (let i = 0; i < N; i++) {
         const u = Math.random();
         const theta = rand(0, Math.PI * 2);
         const phi = Math.acos(rand(-1, 1));
 
-        // Bias toward center (cubic-ish)
         const radius = r * Math.pow(u, 0.55);
 
         const x = radius * Math.sin(phi) * Math.cos(theta);
@@ -106,18 +116,21 @@ export default function NetworkBackground({ isDark }) {
         nodes.push({ x, y, z });
       }
 
-      // Precompute edges by distance in 3D
       const maxD = r * 0.62;
       const maxD2 = maxD * maxD;
 
       for (let i = 0; i < N; i++) {
         for (let j = i + 1; j < N; j++) {
-          const a = nodes[i], b = nodes[j];
-          const dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
+          const a = nodes[i],
+            b = nodes[j];
+          const dx = a.x - b.x,
+            dy = a.y - b.y,
+            dz = a.z - b.z;
           const d2 = dx * dx + dy * dy + dz * dz;
+
           if (d2 < maxD2) {
             const d = Math.sqrt(d2);
-            const t = 1 - d / maxD; // 0..1
+            const t = 1 - d / maxD;
             const baseAlpha = 0.18 + t * 0.55;
             edges.push([i, j, baseAlpha]);
           }
@@ -125,16 +138,20 @@ export default function NetworkBackground({ isDark }) {
       }
     };
 
-    const onMove = (e) => {
+    // Desktop mouse move only (ignore touch)
+    const onPointerMove = (e) => {
+      if (isTouchDevice) return;
       mouse.x = e.clientX / Math.max(1, w);
       mouse.y = e.clientY / Math.max(1, h);
     };
 
-    window.addEventListener("mousemove", onMove, { passive: true });
-    window.addEventListener("resize", () => {
+    const onResize = () => {
       resize();
       init();
-    });
+    };
+
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("resize", onResize);
 
     resize();
     init();
@@ -142,12 +159,13 @@ export default function NetworkBackground({ isDark }) {
     let rafId = 0;
 
     const rotate = (p, ax, ay) => {
-      // Rotate around Y (left-right) then X (up-down)
-      const cosY = Math.cos(ay), sinY = Math.sin(ay);
+      const cosY = Math.cos(ay),
+        sinY = Math.sin(ay);
       let x = p.x * cosY + p.z * sinY;
       let z = -p.x * sinY + p.z * cosY;
 
-      const cosX = Math.cos(ax), sinX = Math.sin(ax);
+      const cosX = Math.cos(ax),
+        sinX = Math.sin(ax);
       let y = p.y * cosX - z * sinX;
       z = p.y * sinX + z * cosX;
 
@@ -157,35 +175,48 @@ export default function NetworkBackground({ isDark }) {
     const tick = () => {
       rafId = requestAnimationFrame(tick);
 
-      // Smooth mouse (avoid jitter)
-      const ease = 0.08;
-      smooth.x += (mouse.x - smooth.x) * ease;
-      smooth.y += (mouse.y - smooth.y) * ease;
+      const now = performance.now() * 0.001;
 
-      // Cursor offset from center => rotation
-      const dx = smooth.x - 0.5; // -0.5..0.5
-      const dy = smooth.y - 0.5;
+      // Desktop: smooth-follow mouse
+      if (!isTouchDevice) {
+        const ease = 0.08;
+        smooth.x += (mouse.x - smooth.x) * ease;
+        smooth.y += (mouse.y - smooth.y) * ease;
 
-      // Rotation angles (tune these)
-      const ay = dx * 0.9;      // rotate around Y with horizontal cursor
-      const ax = -dy * 0.7;     // rotate around X with vertical cursor
+        const dx = smooth.x - 0.5;
+        const dy = smooth.y - 0.5;
+
+        target.yaw = dx * 0.9;
+        target.pitch = -dy * 0.7;
+      } else {
+        // Mobile: premium idle orbit
+        target.yaw = Math.sin(now * 0.35) * 0.35;
+        target.pitch = Math.cos(now * 0.28) * 0.18;
+      }
+
+      // Clamp + smooth rotation to prevent spikes
+      target.yaw = clamp(target.yaw, -0.75, 0.75);
+      target.pitch = clamp(target.pitch, -0.55, 0.55);
+
+      yaw += (target.yaw - yaw) * 0.045;
+      pitch += (target.pitch - pitch) * 0.045;
+
+      const ay = yaw;
+      const ax = pitch;
 
       // Center of screen
       const cx = w * 0.5;
-      const cy = h * 0.50;
+      const cy = h * 0.5;
 
-      // Projection
       const perspective = Math.min(w, h) * 0.85;
       const nodeSize = 3.2;
 
-      // Precompute transformed + projected positions
       const proj = new Array(N);
       for (let i = 0; i < N; i++) {
         const t = rotate(nodes[i], ax, ay);
 
-        // simple perspective projection
         const z = t.z + perspective * 0.85;
-        const s = perspective / z; // scale
+        const s = perspective / z;
         proj[i] = {
           x: cx + t.x * s,
           y: cy + t.y * s,
@@ -199,19 +230,21 @@ export default function NetworkBackground({ isDark }) {
       ctx.fillStyle = palette.bg;
       ctx.fillRect(0, 0, w, h);
 
-      // Optional: slight brighten near cursor
-      const mx = smooth.x * w;
-      const my = smooth.y * h;
+      // Cursor highlight: desktop uses cursor, mobile uses center
+      const mx = isTouchDevice ? cx : smooth.x * w;
+      const my = isTouchDevice ? cy : smooth.y * h;
 
       // Draw edges
       ctx.lineWidth = 1;
-      for (const [i, j, baseA] of edges) {
-        const a = proj[i], b = proj[j];
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
 
-        // Fade edges if both are "behind"
+      for (const [i, j, baseA] of edges) {
+        const a = proj[i],
+          b = proj[j];
+
         const depthFade = 0.65 + 0.35 * ((a.s + b.s) * 0.5);
 
-        // Cursor proximity highlight (midpoint distance)
         const hx = (a.x + b.x) * 0.5 - mx;
         const hy = (a.y + b.y) * 0.5 - my;
         const hd = Math.sqrt(hx * hx + hy * hy);
@@ -226,29 +259,22 @@ export default function NetworkBackground({ isDark }) {
         ctx.stroke();
       }
 
-      // Draw nodes (slightly bigger when closer)
+      // Draw nodes
       ctx.globalAlpha = 1;
       for (let i = 0; i < N; i++) {
         const p = proj[i];
 
-        // Bigger nodes
         const r = nodeSize * (1.4 + p.s * 1.1);
 
-        const zNorm = Math.min(
-          1,
-          Math.max(0, (p.s - 0.6) / 0.9)
-        );
-
+        const zNorm = Math.min(1, Math.max(0, (p.s - 0.6) / 0.9));
         ctx.fillStyle = colorFromDepth(zNorm, isDark);
 
-        // Optional glow (looks great)
         ctx.shadowBlur = 8;
         ctx.shadowColor = ctx.fillStyle;
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
         ctx.fill();
-
       }
 
       ctx.globalAlpha = 1;
@@ -259,7 +285,8 @@ export default function NetworkBackground({ isDark }) {
 
     return () => {
       cancelAnimationFrame(rafId);
-      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("resize", onResize);
     };
   }, [isDark]);
 
