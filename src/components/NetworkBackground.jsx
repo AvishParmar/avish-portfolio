@@ -148,8 +148,23 @@ export default function NetworkBackground({ isDark }) {
     };
 
     const onResize = () => {
+      const nextW = Math.floor(window.innerWidth);
+      const nextH = Math.floor(window.innerHeight);
+
+      // On mobile Safari, height changes constantly during scroll (address bar).
+      // Only rebuild the network when WIDTH changes (orientation / real layout change).
+      const widthChanged = nextW !== lastW;
+      const heightChangedALot = Math.abs(nextH - lastH) > 120; // orientation usually big
+
       resize();
-      init();
+
+      if (!isMobileLike) {
+        // Desktop: ok to rebuild
+        init();
+      } else {
+        // Mobile: rebuild only on width/orientation-like changes
+        if (widthChanged || heightChangedALot) init();
+      }
     };
 
     window.addEventListener("pointermove", onPointerMove, { passive: true });
