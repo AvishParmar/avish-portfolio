@@ -3,7 +3,7 @@ import { Github, Linkedin, Instagram, Twitter, Mail } from "lucide-react";
 
 const LINKS = {
   email: "mailto:avishparmar53@gmail.com",
-  resume: "/resume_2026.pdf",
+  resume: "/avish_parmar_resume_2026.pdf",
   linkedin: "https://www.linkedin.com/in/avishparmar",
   github: "https://github.com/AvishParmar",
   instagram: "https://www.instagram.com/avishparmar/",
