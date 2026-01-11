@@ -46,7 +46,7 @@ export default function BlogIndex() {
               No posts yet
             </p>
             <p className="mt-2 max-w-[420px] text-sm text-muted dark:text-darkmuted">
-              Still figuring out what’s worth writing down. So ironic....(or not)
+              Ironically, still haven't figured out what to figure out...
             </p>
           </div>
         )}
