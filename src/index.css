@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Allow both schemes so the browser doesn't force light-only UI */
+:root {
+  color-scheme: light dark;
+}
+
+/* When html has class="dark", prefer dark native UI */
+html.dark {
+  color-scheme: dark;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.18);
+}
+
+/* Make the AI background look good in dark mode */
+html.dark .ai-bg {
+  filter: saturate(1.05);
+  background-image:
+    radial-gradient(900px 600px at var(--mx) var(--my), rgba(37,99,235,0.18), transparent 60%),
+    radial-gradient(700px 500px at calc(var(--mx) + 12%) calc(var(--my) + 8%), rgba(59,130,246,0.12), transparent 62%),
+    radial-gradient(circle at 1px 1px, rgba(226,232,240,0.10) 1px, transparent 0),
+    linear-gradient(60deg, rgba(226,232,240,0.06) 1px, transparent 1px),
+    linear-gradient(-60deg, rgba(226,232,240,0.05) 1px, transparent 1px);
+}
