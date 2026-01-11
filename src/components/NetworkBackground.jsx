@@ -51,7 +51,9 @@ export default function NetworkBackground({ isDark }) {
 
     // Detect touch device (mobile/tablet)
     const isTouchDevice =
-      "ontouchstart" in window || (navigator?.maxTouchPoints ?? 0) > 0;
+      window.matchMedia?.("(hover: none), (pointer: coarse)")?.matches ||
+      "ontouchstart" in window ||
+      (navigator?.maxTouchPoints ?? 0) > 0;
 
     let w = 0, h = 0, dpr = 1;
 
