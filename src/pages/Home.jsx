@@ -2,12 +2,12 @@ import React, { useRef } from "react";
 import { Github, Linkedin, Instagram, Twitter, Mail } from "lucide-react";
 
 const LINKS = {
-  email: "mailto:your.email@example.com",
-  resume: "/resume.pdf",
-  linkedin: "https://www.linkedin.com/in/YOUR_HANDLE",
-  github: "https://github.com/YOUR_HANDLE",
-  instagram: "https://instagram.com/YOUR_HANDLE",
-  twitter: "https://x.com/YOUR_HANDLE",
+  email: "mailto:avishparmar53@gmail.com",
+  resume: "/resume_2026.pdf",
+  linkedin: "https://www.linkedin.com/in/avishparmar",
+  github: "https://github.com/AvishParmar",
+  instagram: "https://www.instagram.com/avishparmar/",
+  twitter: "https://x.com/AvpAvish",
 };
 
 function IconLink({ href, label, children }) {
@@ -16,7 +16,7 @@ function IconLink({ href, label, children }) {
       href={href}
       aria-label={label}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener noreferrer"
       className="group inline-flex items-center justify-center rounded-xl border border-border bg-white p-2.5 text-muted shadow-sm transition
                  hover:-translate-y-0.5 hover:border-ink/20 hover:text-ink hover:shadow
                  dark:border-darkborder dark:bg-darkbg dark:text-darkmuted
@@ -43,6 +43,8 @@ export default function Home() {
       <div className="mt-8 flex flex-wrap items-center gap-3">
         <a
           href={LINKS.email}
+          target="_blank"
+          rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-white shadow-sm transition
                      hover:-translate-y-0.5 hover:shadow
                      focus:outline-none focus:ring-4 focus:ring-accent/20"
@@ -53,6 +55,8 @@ export default function Home() {
 
         <a
           href={LINKS.resume}
+          target="_blank"
+          rel="noopener noreferrer"
           className="inline-flex items-center rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink shadow-sm transition
                      hover:-translate-y-0.5 hover:border-ink/20 hover:shadow
                      dark:border-darkborder dark:bg-darkbg dark:text-darkink
