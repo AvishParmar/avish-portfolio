@@ -9,7 +9,7 @@ export default function BlogIndex() {
     <section className="pt-10">
       <h1 className="text-3xl font-semibold tracking-tight">Blog</h1>
       <p className="mt-3 text-muted dark:text-darkmuted">
-        Notes from someone figuring it out in public ✍️
+        An attempt at writing down my thoughts
       </p>
 
       <div
@@ -46,7 +46,7 @@ export default function BlogIndex() {
               No posts yet
             </p>
             <p className="mt-2 max-w-[420px] text-sm text-muted dark:text-darkmuted">
-              Ironically, still haven't figured out what to figure out...
+              Check back soon!
             </p>
           </div>
         )}
